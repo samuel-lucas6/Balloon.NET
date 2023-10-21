@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>1.0.0</Version>
+        <Authors>Samuel Lucas</Authors>
+        <Description>A .NET implementation of the Balloon password hashing algorithm.</Description>
+        <Copyright>Copyright (c) 2023 Samuel Lucas</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/samuel-lucas6/Balloon.NET</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/samuel-lucas6/Balloon.NET</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>balloon balloon-hash password-hashing pbkdf memory-hard</PackageTags>
+    </PropertyGroup>
+
+</Project>
