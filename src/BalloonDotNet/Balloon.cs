@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Buffers.Binary;
+using System.Numerics;
 
 namespace BalloonDotNet;
 
@@ -36,7 +37,7 @@ public static class Balloon
                 for (int i = 0; i < delta; i++) {
                     IntsToBlock(idxBlock, t, m, i);
                     Hash(idxBlock, counter++, salt, idxBlock);
-                    uint other = BinaryPrimitives.ReadUInt32LittleEndian(idxBlock) % (uint)spaceCost;
+                    var other = new BigInteger(idxBlock, isUnsigned: true, isBigEndian: false) % spaceCost;
                     Hash(buffer[m], counter++, buffer[m], buffer[(int)other]);
                 }
             }
