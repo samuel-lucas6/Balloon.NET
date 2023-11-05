@@ -10,9 +10,9 @@ public static class Balloon
     public const int SaltSize = 16;
     public const int MinDelta = 3;
 
-    public static void DeriveKey(Span<byte> outputKeyingMaterial, ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt, int spaceCost, int timeCost, int delta = MinDelta)
+    public static void ComputeHash(Span<byte> hash, ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt, int spaceCost, int timeCost, int delta = MinDelta)
     {
-        if (outputKeyingMaterial.Length != HashSize) { throw new ArgumentOutOfRangeException(nameof(outputKeyingMaterial), outputKeyingMaterial.Length, $"{nameof(outputKeyingMaterial)} must be {HashSize} bytes long."); }
+        if (hash.Length != HashSize) { throw new ArgumentOutOfRangeException(nameof(hash), hash.Length, $"{nameof(hash)} must be {HashSize} bytes long."); }
         if (spaceCost < 1) { throw new ArgumentOutOfRangeException(nameof(spaceCost), spaceCost, $"{nameof(spaceCost)} must be greater than 0."); }
         if (timeCost < 1) { throw new ArgumentOutOfRangeException(nameof(timeCost), timeCost, $"{nameof(timeCost)} must be greater than 0."); }
         if (delta < MinDelta) { throw new ArgumentOutOfRangeException(nameof(delta), delta, $"{nameof(delta)} must be greater than or equal to {MinDelta}."); }
@@ -43,7 +43,7 @@ public static class Balloon
             }
         }
 
-        buffer[spaceCost - 1].AsSpan()[..outputKeyingMaterial.Length].CopyTo(outputKeyingMaterial);
+        buffer[spaceCost - 1].AsSpan().CopyTo(hash);
         CryptographicOperations.ZeroMemory(buffer[spaceCost - 1]);
     }
 

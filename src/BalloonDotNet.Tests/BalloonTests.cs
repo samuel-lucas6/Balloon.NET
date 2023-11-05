@@ -54,29 +54,29 @@ public class BalloonTests
 
     [TestMethod]
     [DynamicData(nameof(TestVectors), DynamicDataSourceType.Method)]
-    public void DeriveKey_Valid(string outputKeyingMaterial, string password, string salt, int spaceCost, int timeCost)
+    public void ComputeHash_Valid(string hash, string password, string salt, int spaceCost, int timeCost)
     {
-        Span<byte> o = stackalloc byte[outputKeyingMaterial.Length / 2];
+        Span<byte> h = stackalloc byte[hash.Length / 2];
         Span<byte> p = Encoding.UTF8.GetBytes(password);
         Span<byte> s = Encoding.UTF8.GetBytes(salt);
 
-        Balloon.DeriveKey(o, p, s, spaceCost, timeCost);
+        Balloon.ComputeHash(h, p, s, spaceCost, timeCost);
 
-        Assert.AreEqual(outputKeyingMaterial, Convert.ToHexString(o).ToLower());
+        Assert.AreEqual(hash, Convert.ToHexString(h).ToLower());
     }
 
     [TestMethod]
-    [DataRow(Balloon.HashSize + 1, 20, 16, 1, 1, 3)]
-    [DataRow(Balloon.HashSize - 1, 20, 16, 1, 1, 3)]
-    [DataRow(Balloon.HashSize, 20, 16, 0, 1, 3)]
-    [DataRow(Balloon.HashSize, 20, 16, 1, 0, 3)]
-    [DataRow(Balloon.HashSize, 20, 16, 1, 1, 2)]
-    public void DeriveKey_Invalid(int outputKeyingMaterialSize, int passwordSize, int saltSize, int spaceCost, int timeCost, int delta)
+    [DataRow(Balloon.HashSize + 1, 20, Balloon.SaltSize, 1, 1, Balloon.MinDelta)]
+    [DataRow(Balloon.HashSize - 1, 20, Balloon.SaltSize, 1, 1, Balloon.MinDelta)]
+    [DataRow(Balloon.HashSize, 20, Balloon.SaltSize, 0, 1, Balloon.MinDelta)]
+    [DataRow(Balloon.HashSize, 20, Balloon.SaltSize, 1, 0, Balloon.MinDelta)]
+    [DataRow(Balloon.HashSize, 20, Balloon.SaltSize, 1, 1, Balloon.MinDelta - 1)]
+    public void ComputeHash_Invalid(int hashSize, int passwordSize, int saltSize, int spaceCost, int timeCost, int delta)
     {
-        var o = new byte[outputKeyingMaterialSize];
+        var h = new byte[hashSize];
         var p = new byte[passwordSize];
         var s = new byte[saltSize];
 
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => Balloon.DeriveKey(o, p, s, spaceCost, timeCost, delta));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => Balloon.ComputeHash(h, p, s, spaceCost, timeCost, delta));
     }
 }
