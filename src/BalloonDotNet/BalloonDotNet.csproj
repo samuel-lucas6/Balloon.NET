@@ -12,7 +12,8 @@
         <PackageProjectUrl>https://github.com/samuel-lucas6/Balloon.NET</PackageProjectUrl>
         <RepositoryUrl>https://github.com/samuel-lucas6/Balloon.NET</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>balloon balloon-hash password-hashing pbkdf memory-hard</PackageTags>
+        <PackageTags>balloon balloon-hash balloon-hashing balloonm balloon-m password-hashing pbkdf memory-hard</PackageTags>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
 </Project>
