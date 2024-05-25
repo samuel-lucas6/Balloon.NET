@@ -17,45 +17,48 @@ public static class Balloon
         if (timeCost < 1) { throw new ArgumentOutOfRangeException(nameof(timeCost), timeCost, $"{nameof(timeCost)} must be greater than 0."); }
         if (delta < MinDelta) { throw new ArgumentOutOfRangeException(nameof(delta), delta, $"{nameof(delta)} must be greater than or equal to {MinDelta}."); }
 
-        var buffer = new List<byte[]>();
-        for (int i = 0; i < spaceCost; i++) {
-            buffer.Add(new byte[HashSize]);
-        }
-        ulong counter = 0;
+        Span<byte> buffer = new byte[spaceCost * HashSize];
+        Span<byte> counter = stackalloc byte[8];
         Span<byte> idxBlock = stackalloc byte[HashSize];
 
-        Hash(buffer[0], counter++, password, salt);
+        Hash(buffer[..HashSize], counter, password, salt);
         for (int m = 1; m < spaceCost; m++) {
-            Hash(buffer[m], counter++, buffer[m - 1]);
+            Hash(buffer.Slice(m * HashSize, HashSize), counter, buffer.Slice((m - 1) * HashSize, HashSize));
         }
 
         for (int t = 0; t < timeCost; t++) {
             for (int m = 0; m < spaceCost; m++) {
-                Span<byte> previous = buffer[m == 0 ? spaceCost - 1 : m - 1];
-                Hash(buffer[m], counter++, previous, buffer[m]);
+                Span<byte> previous = buffer.Slice(m == 0 ? (spaceCost - 1) * HashSize : (m - 1) * HashSize, HashSize);
+                Span<byte> current = buffer.Slice(m * HashSize, HashSize);
+                Hash(current, counter, previous, current);
 
                 for (int i = 0; i < delta; i++) {
                     IntsToBlock(idxBlock, t, m, i);
-                    Hash(idxBlock, counter++, salt, idxBlock);
+                    Hash(idxBlock, counter, salt, idxBlock);
                     var other = new BigInteger(idxBlock, isUnsigned: true, isBigEndian: false) % spaceCost;
-                    Hash(buffer[m], counter++, buffer[m], buffer[(int)other]);
+                    Hash(current, counter, current, buffer.Slice((int)other * HashSize, HashSize));
                 }
             }
         }
 
-        buffer[spaceCost - 1].AsSpan().CopyTo(hash);
-        CryptographicOperations.ZeroMemory(buffer[spaceCost - 1]);
+        buffer[^HashSize..].CopyTo(hash);
+        CryptographicOperations.ZeroMemory(buffer);
     }
 
-    private static void Hash(Span<byte> buffer, ulong counter, ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt = default)
+    private static void Hash(Span<byte> buffer, Span<byte> counter, ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt = default)
     {
-        Span<byte> ctr = stackalloc byte[8];
-        BinaryPrimitives.WriteUInt64LittleEndian(ctr, counter);
         using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        sha256.AppendData(ctr);
+        sha256.AppendData(counter);
         sha256.AppendData(password);
         sha256.AppendData(salt);
         sha256.GetCurrentHash(buffer);
+
+        for (int i = 0; i < counter.Length; i++) {
+            counter[i]++;
+            if (counter[i] != 0) {
+                break;
+            }
+        }
     }
 
     private static void IntsToBlock(Span<byte> idxBlock, int t, int m, int i)
@@ -63,6 +66,7 @@ public static class Balloon
         BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[..8], (ulong)t);
         BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[8..16], (ulong)m);
         BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[16..24], (ulong)i);
+
         using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         sha256.AppendData(idxBlock[..24]);
         sha256.GetCurrentHash(idxBlock);
