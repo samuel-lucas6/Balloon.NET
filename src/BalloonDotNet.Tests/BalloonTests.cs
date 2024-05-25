@@ -10,46 +10,46 @@ public class BalloonTests
     // https://github.com/nachonavarro/balloon-hashing/blob/master/test_vectors.py
     public static IEnumerable<object[]> TestVectors()
     {
-        yield return new object[]
-        {
+        yield return
+        [
             "716043dff777b44aa7b88dcbab12c078abecfac9d289c5b5195967aa63440dfb",
             "hunter42",
             "examplesalt",
             1024,
             3
-        };
-        yield return new object[]
-        {
+        ];
+        yield return
+        [
             "5f02f8206f9cd212485c6bdf85527b698956701ad0852106f94b94ee94577378",
             "",
             "salt",
             3,
             3
-        };
-        yield return new object[]
-        {
+        ];
+        yield return
+        [
             "20aa99d7fe3f4df4bd98c655c5480ec98b143107a331fd491deda885c4d6a6cc",
             "password",
             "",
             3,
             3
-        };
-        yield return new object[]
-        {
+        ];
+        yield return
+        [
             "4fc7e302ffa29ae0eac31166cee7a552d1d71135f4e0da66486fb68a749b73a4",
             "\0",
             "\0",
             3,
             3
-        };
-        yield return new object[]
-        {
+        ];
+        yield return
+        [
             "eefda4a8a75b461fa389c1dcfaf3e9dfacbc26f81f22e6f280d15cc18c417545",
             "password",
             "salt",
             1,
             1
-        };
+        ];
     }
 
     [TestMethod]
