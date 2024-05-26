@@ -19,7 +19,7 @@ public static class Balloon
 
         Span<byte> buffer = new byte[spaceCost * HashSize];
         Span<byte> counter = stackalloc byte[8];
-        Span<byte> idxBlock = stackalloc byte[HashSize];
+        Span<byte> idxBlock = stackalloc byte[16 + HashSize], idxBlockHash = idxBlock[16..];
 
         Hash(buffer[..HashSize], counter, password, salt);
         for (int m = 1; m < spaceCost; m++) {
@@ -27,15 +27,21 @@ public static class Balloon
         }
 
         for (int t = 0; t < timeCost; t++) {
+            BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[..8], (ulong)t);
             for (int m = 0; m < spaceCost; m++) {
                 Span<byte> previous = buffer.Slice(m == 0 ? (spaceCost - 1) * HashSize : (m - 1) * HashSize, HashSize);
                 Span<byte> current = buffer.Slice(m * HashSize, HashSize);
                 Hash(current, counter, previous, current);
 
+                BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[8..16], (ulong)m);
                 for (int i = 0; i < delta; i++) {
-                    IntsToBlock(idxBlock, t, m, i);
-                    Hash(idxBlock, counter, salt, idxBlock);
-                    var other = new BigInteger(idxBlock, isUnsigned: true, isBigEndian: false) % spaceCost;
+                    BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[16..24], (ulong)i);
+                    using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                    sha256.AppendData(idxBlock[..24]);
+                    sha256.GetCurrentHash(idxBlockHash);
+
+                    Hash(idxBlockHash, counter, salt, idxBlockHash);
+                    var other = new BigInteger(idxBlockHash, isUnsigned: true, isBigEndian: false) % spaceCost;
                     Hash(current, counter, current, buffer.Slice((int)other * HashSize, HashSize));
                 }
             }
@@ -59,16 +65,5 @@ public static class Balloon
                 break;
             }
         }
-    }
-
-    private static void IntsToBlock(Span<byte> idxBlock, int t, int m, int i)
-    {
-        BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[..8], (ulong)t);
-        BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[8..16], (ulong)m);
-        BinaryPrimitives.WriteUInt64LittleEndian(idxBlock[16..24], (ulong)i);
-
-        using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        sha256.AppendData(idxBlock[..24]);
-        sha256.GetCurrentHash(idxBlock);
     }
 }
